@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.env
+.env.local
+
+# Reports (Generated files)
+report.html
+report.json
+
+# IDEs
+.vscode/
+.idea/

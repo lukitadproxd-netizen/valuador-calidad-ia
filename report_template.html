@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reporte de Evaluación — {{ metadata.agent_name }}</title>
+  <style>
+    :root {
+      --bg-primary: #0f1117;
+      --bg-card: #1a1d27;
+      --bg-card-alt: #22263a;
+      --accent-green: #34d399;
+      --accent-yellow: #fbbf24;
+      --accent-red: #f87171;
+      --accent-blue: #60a5fa;
+      --accent-purple: #a78bfa;
+      --text-primary: #e2e8f0;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --border: #2d3348;
+      --radius: 12px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem;
+    }
+
+    header {
+      text-align: center;
+      padding: 2.5rem 0 2rem;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 2rem;
+    }
+
+    header h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 0.5rem;
+    }
+
+    header .meta {
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+
+    header .meta span {
+      margin: 0 0.5rem;
+    }
+
+    .score-overview {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .score-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      text-align: center;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .score-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    }
+
+    .score-card .label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+    }
+
+    .score-card .value {
+      font-size: 2rem;
+      font-weight: 700;
+    }
+
+    .score-card .max {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .score-card .bar-track {
+      width: 100%;
+      height: 6px;
+      background: var(--bg-primary);
+      border-radius: 3px;
+      margin-top: 0.75rem;
+      overflow: hidden;
+    }
+
+    .score-card .bar-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 0.6s ease;
+    }
+
+    .global-score {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .global-score .value {
+      font-size: 3rem;
+      font-weight: 800;
+    }
+
+    .global-score .label {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .issues-summary {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .issue-card {
+      background: var(--bg-card);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      border-left: 4px solid;
+    }
+
+    .issue-card.critical { border-color: var(--accent-red); }
+    .issue-card.warning { border-color: var(--accent-yellow); }
+    .issue-card.info { border-color: var(--accent-blue); }
+
+    .issue-card .issue-title {
+      font-weight: 600;
+      font-size: 0.9rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .issue-card .issue-count {
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+
+    .issue-card.critical .issue-count { color: var(--accent-red); }
+    .issue-card.warning .issue-count { color: var(--accent-yellow); }
+    .issue-card.info .issue-count { color: var(--accent-blue); }
+
+    h2 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .case-list { margin-bottom: 2rem; }
+
+    .case-item {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 1rem;
+      overflow: hidden;
+    }
+
+    .case-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 1.25rem;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .case-header:hover { background: var(--bg-card-alt); }
+
+    .case-id {
+      font-family: 'JetBrains Mono', 'Fira Code', monospace;
+      font-size: 0.8rem;
+      color: var(--accent-purple);
+      background: rgba(167, 139, 250, 0.1);
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+    }
+
+    .case-category {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .case-score-badge {
+      font-weight: 700;
+      font-size: 0.85rem;
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+    }
+
+    .badge-high {
+      background: rgba(52, 211, 153, 0.15);
+      color: var(--accent-green);
+    }
+
+    .badge-mid {
+      background: rgba(251, 191, 36, 0.15);
+      color: var(--accent-yellow);
+    }
+
+    .badge-low {
+      background: rgba(248, 113, 113, 0.15);
+      color: var(--accent-red);
+    }
+
+    .case-body {
+      padding: 0 1.25rem 1.25rem;
+      display: none;
+    }
+
+    .case-item.open .case-body { display: block; }
+
+    .case-item.open .chevron { transform: rotate(180deg); }
+
+    .chevron {
+      color: var(--text-muted);
+      transition: transform 0.2s ease;
+      font-size: 0.75rem;
+    }
+
+    .field {
+      margin-bottom: 1rem;
+    }
+
+    .field-label {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      margin-bottom: 0.25rem;
+    }
+
+    .field-value {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      background: var(--bg-primary);
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+
+    .scores-inline {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      margin-top: 0.5rem;
+    }
+
+    .score-pill {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.8rem;
+      padding: 0.35rem 0.65rem;
+      border-radius: 6px;
+      background: var(--bg-primary);
+      border: 1px solid var(--border);
+    }
+
+    .score-pill .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    .dot-green { background: var(--accent-green); }
+    .dot-yellow { background: var(--accent-yellow); }
+    .dot-red { background: var(--accent-red); }
+
+    .notes-box {
+      background: rgba(251, 191, 36, 0.05);
+      border: 1px solid rgba(251, 191, 36, 0.2);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      font-size: 0.85rem;
+      color: var(--accent-yellow);
+    }
+
+    footer {
+      text-align: center;
+      padding: 2rem 0;
+      border-top: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 0.8rem;
+    }
+
+    @media (max-width: 600px) {
+      .score-overview { grid-template-columns: repeat(2, 1fr); }
+      .case-header { flex-wrap: wrap; gap: 0.5rem; }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>Evaluación de Calidad — {{ metadata.agent_name }}</h1>
+    <div class="meta">
+      <span>Versión {{ metadata.version }}</span>
+      <span>·</span>
+      <span>{{ metadata.evaluated_at }}</span>
+      <span>·</span>
+      <span>{{ summary.total_cases }} casos evaluados</span>
+    </div>
+  </header>
+
+  <div class="global-score">
+    <div class="label">Score Global Ponderado</div>
+    <div class="value" style="color: {% if summary.global_score >= 80 %}var(--accent-green){% elif summary.global_score >= 60 %}var(--accent-yellow){% else %}var(--accent-red){% endif %};">
+      {{ "%.1f"|format(summary.global_score) }}%
+    </div>
+  </div>
+
+  <div class="score-overview">
+    {% for cat_key, cat_data in summary.categories.items() %}
+    <div class="score-card">
+      <div class="label">{{ cat_key | replace('_', ' ') | title }}</div>
+      <div class="value" style="color: {% if cat_data.percentage >= 80 %}var(--accent-green){% elif cat_data.percentage >= 60 %}var(--accent-yellow){% else %}var(--accent-red){% endif %};">
+        {{ "%.1f"|format(cat_data.average) }}
+      </div>
+      <div class="max">/ 5 · Peso {{ "%.0f"|format(cat_data.weight * 100) }}%</div>
+      <div class="bar-track">
+        <div class="bar-fill" style="width: {{ cat_data.percentage }}%;
+          background: {% if cat_data.percentage >= 80 %}var(--accent-green){% elif cat_data.percentage >= 60 %}var(--accent-yellow){% else %}var(--accent-red){% endif %};"></div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="issues-summary">
+    <div class="issue-card critical">
+      <div class="issue-title">Fallas Críticas</div>
+      <div class="issue-count">{{ summary.critical_cases }}</div>
+    </div>
+    <div class="issue-card warning">
+      <div class="issue-title">Requiere Atención</div>
+      <div class="issue-count">{{ summary.warning_cases }}</div>
+    </div>
+    <div class="issue-card info">
+      <div class="issue-title">Aprobados</div>
+      <div class="issue-count">{{ summary.passed_cases }}</div>
+    </div>
+  </div>
+
+  <h2>Detalle por Caso</h2>
+  <div class="case-list">
+    {% for case in results %}
+    <div class="case-item">
+      <div class="case-header" onclick="this.parentElement.classList.toggle('open')">
+        <div>
+          <span class="case-id">{{ case.id }}</span>
+          <span class="case-category">{{ case.category }}</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+          <span class="case-score-badge {% if case.weighted_score >= 80 %}badge-high{% elif case.weighted_score >= 60 %}badge-mid{% else %}badge-low{% endif %}">
+            {{ "%.0f"|format(case.weighted_score) }}%
+          </span>
+          <span class="chevron">▼</span>
+        </div>
+      </div>
+      <div class="case-body">
+        <div class="field">
+          <div class="field-label">Entrada del usuario</div>
+          <div class="field-value">{{ case.input }}</div>
+        </div>
+        <div class="field">
+          <div class="field-label">Respuesta del agente</div>
+          <div class="field-value">{{ case.agent_response }}</div>
+        </div>
+        <div class="field">
+          <div class="field-label">Comportamiento esperado</div>
+          <div class="field-value">{{ case.expected_behavior }}</div>
+        </div>
+        <div class="field">
+          <div class="field-label">Scores por categoría</div>
+          <div class="scores-inline">
+            {% for score_key, score_val in case.scores.items() %}
+            <div class="score-pill">
+              <span class="dot {% if score_val >= 4 %}dot-green{% elif score_val >= 3 %}dot-yellow{% else %}dot-red{% endif %}"></span>
+              {{ score_key | title }}: {{ score_val }}/5
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        {% if case.notes %}
+        <div class="notes-box">{{ case.notes }}</div>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <footer>
+    Generado por <strong>evaluador-calidad-ia</strong> · {{ metadata.evaluated_at }}
+  </footer>
+</div>
+</body>
+</html>
